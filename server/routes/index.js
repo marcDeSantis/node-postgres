@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pg = require('pg');
 const path = require('path');
+var models  = require('../models');
 const connectionString = process.env.DATABASE_URL || 'postgres://localhost:5432/todo';
 
 /* GET home page. */
@@ -40,52 +41,24 @@ router.post('/api/v1/todos', (req, res, next) => {
 });
 
 router.get('/api/v1/todos', (req, res, next) => {
-  const results = [];
-  // Get a Postgres client from the connection pool
-  pg.connect(connectionString, (err, client, done) => {
-    // Handle connection errors
-    if(err) {
-      done();
-      console.log(err);
-      return res.status(500).json({success: false, data: err});
+  var queryParams = req.params;
+  console.log(req.query);
+  models.item.findAll(
+    {
+      where: req.query
     }
-    // SQL Query > Select Data
-    const query = client.query('SELECT * FROM items ORDER BY id ASC;');
-    // Stream results back one row at a time
-    query.on('row', (row) => {
-      results.push(row);
-    });
-    // After all data is returned, close connection and return results
-    query.on('end', () => {
-      done();
-      return res.json(results);
-    });
+    ).then(function(items) {
+     return res.json( items );
   });
 });
 
 router.get('/api/v1/todos/:todo_id', (req, res, next) => {
-  var result = {};
-  // Get a Postgres client from the connection pool
-  pg.connect(connectionString, (err, client, done) => {
-    // Handle connection errors
-    if(err) {
-      done();
-      console.log(err);
-      return res.status(500).json({success: false, data: err});
+  models.item.findById(req.params.todo_id).then(
+    function(item) {
+      var returnItem = (item) ? item : {};
+      return res.json(returnItem);
     }
-    const id = req.params.todo_id;
-    // SQL Query > Select Data
-    const query = client.query('SELECT * FROM items WHERE id = ($1);', [id]);
-    // Stream results back one row at a time
-    query.on('row', (row) => {
-      result = row;
-    });
-    // After all data is returned, close connection and return results
-    query.on('end', () => {
-      done();
-      return res.json(result);
-    });
-  });
+  );
 });
 
 router.put('/api/v1/todos/:todo_id', (req, res, next) => {
