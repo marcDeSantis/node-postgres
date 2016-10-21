@@ -8,7 +8,8 @@ var app = require('../app');
 var debug = require('debug')('node-postgres-todo:server');
 var http = require('http');
 var massive = require("massive");
-var connectionString = process.env.DATABASE_URL || 'postgres://localhost:5432/todo';
+var dotenv = require('dotenv').config();
+var connectionString = process.env.DATABASE_URL;
 
 // connect to Massive and get the db instance. You can safely use the
 // convenience sync method here because its on app load
